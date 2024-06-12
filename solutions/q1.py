@@ -82,6 +82,7 @@ def maximum_cont_sub_sum_dyn_progr(l: list) -> list:
             a_max_cont_sub_sums[idx] = 0
             idx_left = idx + 1
             a_idx_lefts[idx] = -1
+
     print("Input array:", l)
     print("Starting index of the contigious subarray that has the maximum sum:", a_idx_lefts)
     print("The maximum sum of the subarray ending at the current position", a_max_cont_sub_sums)

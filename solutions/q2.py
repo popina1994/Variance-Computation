@@ -1,146 +1,129 @@
 import unittest
 
 
-def maximum_cont_sub_sum_brute_force(l: list) -> list:
-    if (l is None) or (len(l) == 0):
-        return []
-    len_l = len(l)
-
-    max_idx_left = -1
-    max_idx_right = -1
-    max_sum = 0
-    for idx_left in range(0, len_l):
-        for idx_right in range(idx_left, len_l):
-            sum_val = sum(l[idx_left:(idx_right+1)])
-            if sum_val > max_sum:
-                max_idx_left = idx_left
-                max_idx_right = idx_right
-                max_sum = sum_val
-
-    if max_sum == 0:
-        return []
-    return l[max_idx_left:(max_idx_right+1)]
-
-
-def maximum_cont_sub_sum_optimized(l: list) -> list:
-    if (l is None) or (len(l) == 0):
-        return []
-    len_l = len(l)
-
-    pref_sum = [0] * len_l
-    pref_sum[0] = l[0]
-    for idx in range(1, len_l):
-        pref_sum[idx] = pref_sum[idx-1] + l[idx]
-
-    a_max_cont_sub_sums = [0] * len_l
-    max_idx_left = -1
-    max_idx_right = -1
-    max_sum = 0
-    for idx_left in range(0, len_l):
-        for idx_right in range(idx_left, len_l):
-            if idx_left > 0:
-                pref_sum_left = pref_sum[idx_left-1]
-            else:
-                pref_sum_left = 0
-            sum_val = pref_sum[idx_right] - pref_sum_left
-
-            if sum_val > max_sum:
-                max_idx_left = idx_left
-                max_idx_right = idx_right
-                max_sum = sum_val
-
-    if max_sum == 0:
-        return []
-
-    return l[max_idx_left:(max_idx_right + 1)]
-
-
-def maximum_cont_sub_sum_dyn_progr(l: list) -> list:
-    if (l is None) or (len(l) == 0):
-        return []
-    len_l = len(l)
-
-    idx_left = 0
-    idx_right = -1
-
-    max_idx_left = -1
-    max_idx_right = -1
-    max_sum = 0
-
-    a_max_cont_sub_sums = [0] * len_l
-    a_idx_lefts = [-1] * len_l
-    if l[0] > 0:
-        a_max_cont_sub_sums[0] = l[0]
-        a_idx_lefts[0] = 0
-
-
-    for idx in range(1, len_l):
-        if a_max_cont_sub_sums[idx-1] + l[idx] > 0:
-            a_max_cont_sub_sums[idx] = a_max_cont_sub_sums[idx - 1] + l[idx]
-            a_idx_lefts[idx] = idx_left
+def print_edit_matrix(ed_dist_mat, str_a, str_b):
+    len_a = len(str_a)
+    len_b = len(str_b)
+    print("%3c" % "-", end='')
+    print("%3c" % "-", end='')
+    for idx_b in range(0, len_b):
+        print("%3c" % str_b[idx_b], end='')
+    print()
+    for idx_a in range(0, len_a + 1):
+        if idx_a == 0:
+            print("%3c" % "-", end='')
         else:
-            a_max_cont_sub_sums[idx] = 0
-            idx_left = idx + 1
-            a_idx_lefts[idx] = -1
+            print("%3c" % str_a[idx_a - 1], end='')
+        for idx_b in range(0, len_b + 1):
+            print("%3d" % ed_dist_mat[idx_a][idx_b], end='')
+        print("")
+    print("")
 
-    print("idx_lefts", a_idx_lefts)
-    print("a_max_cont_sub_sums", a_max_cont_sub_sums)
 
-    for idx in range(len_l):
-        if a_max_cont_sub_sums[idx] > max_sum:
-            max_idx_left = a_idx_lefts[idx]
-            max_idx_right = idx
-            max_sum = a_max_cont_sub_sums[idx]
-    if max_sum == 0:
-        return []
+def back_track_changes(ed_dist_matrix, str_a, str_b):
+    idx_a = len(str_a)
+    idx_b = len(str_b)
+    changes = []
+    cur_idx = ed_dist_matrix[idx_a][idx_b]
 
-    return l[max_idx_left:(max_idx_right+1)]
+    while not (idx_a == 0 and idx_b == 0):
+        if idx_a == 0:
+            changes.append(('I', idx_b, str_b[idx_b-1]))
+            idx_b -= 1
+        elif idx_b == 0:
+            changes.append(('D', 0))
+            idx_a -= 1
+        else:
+            if str_a[idx_a-1] == str_b[idx_b-1]:
+                idx_a = idx_a - 1
+                idx_b = idx_b - 1
+            else:
+                if ed_dist_matrix[idx_a - 1][idx_b] + 1 == ed_dist_matrix[idx_a][idx_b]:
+                    change = ('D', idx_b)
+                    idx_a = idx_a - 1
+                else:
+                    change = ('I', idx_b-1, str_b[idx_b-1])
+                    idx_b = idx_b - 1
+                changes.append(change)
+        print("Backtracking position", idx_a, idx_b)
+    changes.reverse()
+
+    return changes
+
+
+def edit_distance(str_a: str, str_b: str) -> int:
+    len_a = len(str_a)
+    len_b = len(str_b)
+
+    ed_dist_mat = []
+
+    # Allocate the distance matrix
+    for idx_a in range(len_a + 1):
+        ed_dist_mat.append([0] * (len_b+1))
+
+    # Initialize the edge cases of the distance matrix
+    for idx_a in range(len_a+1):
+        ed_dist_mat[idx_a][0] = idx_a
+    for idx_b in range(len_b+1):
+        ed_dist_mat[0][idx_b] = idx_b
+
+    for idx_a in range(1, len_a+1):
+        for idx_b in range(1, len_b+1):
+            if str_a[idx_a-1] == str_b[idx_b-1]:
+                ed_dist_mat[idx_a][idx_b] = ed_dist_mat[idx_a-1][idx_b-1]
+            else:
+                ed_dist_mat[idx_a][idx_b] = min(ed_dist_mat[idx_a-1][idx_b], ed_dist_mat[idx_a][idx_b-1] ) + 1
+
+    print_edit_matrix(ed_dist_mat, str_a, str_b)
+    changes = back_track_changes(ed_dist_mat, str_a, str_b)
+    print(changes)
+
+    tran_str = str_a
+    print("Original:", tran_str)
+    for change in changes:
+        if change[0] == 'D':
+            del_pos = change[1]
+            print("Deleting the letter", tran_str[del_pos], "at the position", del_pos)
+            tran_str = tran_str[:del_pos] + tran_str[(del_pos+1):]
+        elif change[0] == 'I':
+            ins_pos = change[1]
+            char_letter = change[2]
+            print("Inserting the letter", char_letter, "at the position", ins_pos)
+            prefix = tran_str[:ins_pos]
+            suffix = tran_str[ins_pos:]
+            prefix = "" if len(prefix) == 0 else prefix
+            suffix = "" if len(suffix) == 0 else suffix
+            tran_str = prefix + char_letter + suffix
+        print("After transformation", tran_str)
+
+    return ed_dist_mat[len_a][len_b]
 
 
 class TestQuestion1(unittest.TestCase):
     def test_empty(self):
-        input_list = []
-        exp_list = []
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
+        str_a = []
+        str_b = []
+        exp_num = 0
+        self.assertEqual(edit_distance(str_a, str_b), exp_num)
 
-    def test_none(self):
-        input_list = None
-        exp_list = []
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
+    def test_one_empty_other_full(self):
+        str_a = []
+        str_b = "0123456789"
+        exp_num = 10
+        self.assertEqual(edit_distance(str_a, str_b), exp_num)
 
     def test_example(self):
-        input_list = [1, 2, 3, -11, 10, 6, -10, 11, -5]
-        exp_list = [10, 6, -10, 11]
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
+        str_a = "cheese"
+        str_b = "chess"
+        exp_num = 3
+        self.assertEqual(edit_distance(str_a, str_b), exp_num)
 
     def test_example2(self):
-        input_list = [1, 2, 3, -11, 10]
-        exp_list = [10]
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
+        str_a = "rhymes"
+        str_b = "reason"
+        exp_num = 6
+        self.assertEqual(edit_distance(str_a, str_b), exp_num)
 
-
-    def test_example3(self):
-        input_list = [1, 2, 3, -11, -12, -4, 4]
-        exp_list = [1, 2, 3]
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
-
-
-    def test_example4(self):
-        input_list = [1, 2, 3, -11, -12, -4, 4, -7, 8, 9]
-        exp_list = [8, 9]
-        self.assertEqual(maximum_cont_sub_sum_brute_force(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_optimized(input_list), exp_list)
-        self.assertEqual(maximum_cont_sub_sum_dyn_progr(input_list), exp_list)
 
 if __name__ == '__main__':
     print("HELLO")
