@@ -99,7 +99,7 @@ def edit_distance(str_a: str, str_b: str) -> int:
     return ed_dist_mat[len_a][len_b]
 
 
-class TestQuestion2(unittest.TestCase):
+class TestQuestion1(unittest.TestCase):
     def test_empty(self):
         str_a = []
         str_b = []
