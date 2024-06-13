@@ -72,7 +72,7 @@ def edit_distance(str_a: str, str_b: str) -> int:
             if str_a[idx_a-1] == str_b[idx_b-1]:
                 ed_dist_mat[idx_a][idx_b] = ed_dist_mat[idx_a-1][idx_b-1]
             else:
-                ed_dist_mat[idx_a][idx_b] = min(ed_dist_mat[idx_a-1][idx_b], ed_dist_mat[idx_a][idx_b-1] ) + 1
+                ed_dist_mat[idx_a][idx_b] = min(ed_dist_mat[idx_a-1][idx_b], ed_dist_mat[idx_a][idx_b-1]) + 1
 
     print_edit_matrix(ed_dist_mat, str_a, str_b)
     changes = back_track_changes(ed_dist_mat, str_a, str_b)
